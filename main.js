@@ -6,20 +6,30 @@ $(async function(){
 
   const
     txtBox = $('#text'),
-    timeStart,
-    //FIXME Need independent time vars
-    logStart = () => timeStart = new Date(),
-    logEnd = () => {
-      txtBox.append((new Date()).valueOf() - timeStart.valueOf());
-    };
+    logStart = function(label){
+      let timeStart = new Date();
+      return () => {
+        txtBox.append(
+          `<h3>${label}: ${(new Date()).valueOf() - timeStart.valueOf()}</h3>`
+        );
+      };
+    }
 
   //sequential
-  logStart();
-  await $.get(imgSmall);
-  logEnd(imgSmall);
+  let logSeqTotalEnd = logStart('sequential total');
 
-  logStart();
-  await $.get(imgBig);
-  logEnd(imgBig);
+  let logEnd1 = logStart(`sequential ${imgSmall}`);
+  await $.get(imgSmall, {cache:false});
+  logEnd1();
 
+  let logEnd2 = logStart(`sequential ${imgBig}`);
+  await $.get(imgBig, {cache:false});
+  logEnd2();
+
+  logSeqTotalEnd();
+
+  //concurrent
+  let logConcTotalEnd = logStart('concurrent total');
+  await* [$.get(imgSmall, {cache:false}), await $.get(imgBig, {cache:false})];
+  logConcTotalEnd();
 });
